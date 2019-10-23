@@ -88,6 +88,17 @@
   - name: Adjust Apparmor for libvirtd
     command: 'apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd'
 
+
+  - name: Add openstack1 as an insecure docker registry on all nodes
+    copy:
+      src: files/daemon.json
+      dest: /etc/docker/daemon.json
+
+  - name: Restart docker
+    service:
+      name: docker
+      state: restarted
+
   - name: Ensure /etc/kolla/config directories
     file:
       path: "{{item}}"
