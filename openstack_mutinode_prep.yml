@@ -167,6 +167,7 @@
     when:
       - inventory_hostname == "openstack1"
 
+
   - name: Copy /opt/kolla-ansible/etc/kolla/passwords.yml to /etc/kolla/passwords.yml
     copy:
       src: /opt/kolla-ansible/etc/kolla/passwords.yml
@@ -213,6 +214,14 @@
       force: yes
     when:
       - inventory_hostname == "openstack1"
+
+  - name: Run start-registry from installed kolla-ansible tools
+    command: /usr/local/share/kolla/tools/start-registry
+    args:
+      chdir: '/etc/kolla'
+    when:
+      - inventory_hostname == "openstack1"
+
 
 #  - name: Build kolla containers
 #    command: 'kolla-build -b debian -t source'
