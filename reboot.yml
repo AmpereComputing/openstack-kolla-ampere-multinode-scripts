@@ -1,0 +1,5 @@
+---
+- hosts: ampere
+  tasks:
+  - name: Reboot Nodes
+    reboot:

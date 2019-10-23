@@ -1,0 +1,16 @@
+---
+- hosts: ampere
+  tasks:
+  - name: "Add SSH Keys from Github to root"
+    authorized_key:
+      user: root
+      state: present
+      manage_dir: yes
+      key: https://github.com/ppouliot.keys
+
+  - name: "Add SSH Keys from Github to peter"
+    authorized_key:
+      user: debian
+      state: present
+      manage_dir: yes
+      key: https://github.com/ppouliot.keys

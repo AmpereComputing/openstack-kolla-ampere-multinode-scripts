@@ -1,0 +1,245 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Requirements for OpenStack Kolla Deployment
+  hosts: ampere
+  any_errors_fatal: true
+  tasks:
+
+  - name: Ensure /etc/network/interfaces is properly configured
+    template:
+      src: interfaces.j2
+      dest: /etc/network/interfaces
+      owner: root
+      group: root
+
+  - name: Restart network
+    service:
+      name: networking
+      state: restarted
+
+  - name: Update-alternatives python2
+    alternatives:
+      name: python
+      link: /usr/bin/python
+      path: /usr/bin/python2.7
+      priority: 1
+
+  - name: Update-alternatives python3
+    alternatives:
+      name: python
+      link: /usr/bin/python
+      path: /usr/bin/python3.7
+      priority: 2
+
+
+  - name: Installing Base Packages
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: true
+    vars:
+      packages:
+        - aptitude
+        - screen
+        - rsync
+        - git
+        - curl
+        - byobu
+        - asciinema
+        - docker.io
+        - python3-dev
+        - python3-pip
+        - python3-selinux
+        - python3-setuptools
+        - python3-virtualenv
+        - libffi-dev
+        - gcc
+        - libssl-dev
+        - bridge-utils
+        - cpu-checker
+        - libvirt-daemon*
+        - qemu-system
+        - qemu-efi
+        - virtinst
+        - virt-manager
+        - open-iscsi
+        - unzip
+
+  - name: Use pip3 to upgrade to latest pip
+    pip:
+      name: pip
+      executable: pip3
+      extra_args: "-U"
+
+  - name: Comment out the line begining with 127.0.1.1 in /etc/hosts
+    replace:
+      path: /etc/hosts
+      before: '127.0.1.1'
+      regexp: '^(.+$)'
+      replace: '# \1'
+
+  - name: Stop and disable of libvirt, iscsi.
+    service: 'name={{ item }} enabled=false state=stopped'
+    with_items:
+      - libvirtd
+      - iscsid
+      - open-iscsi
+
+  - name: Adjust Apparmor for libvirtd
+    command: 'apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd'
+
+  - name: Ensure /etc/kolla/config directories
+    file:
+      path: "{{item}}"
+      state: directory
+      mode: 0775
+      owner: root
+      group: root
+    with_items:
+      - /etc/kolla
+      - /etc/kolla/config
+      - /etc/ansible
+      - /etc/ansible/inventory
+
+  - name: Copy ansible multinode inventory for this cluster to /etc/ansible/inventory/multinode on openstack1
+    copy:
+      src: multinode
+      dest: /etc/ansible/inventory/multinode
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Copy globals.yaml for this multinode to openstack1
+    copy:
+      src: globals.yml
+      dest: /etc/kolla/globals.yml
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use git to retrieve OpenStack Kolla
+    git:
+      repo: https://opendev.org/openstack/kolla
+      dest: /opt/kolla
+      clone: yes
+      update: yes
+      force: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use git to retrieve OpenStack kolla-ansible
+    git:
+      repo: https://opendev.org/openstack/kolla-ansible
+      dest: /opt/kolla-ansible
+      clone: yes
+      update: yes
+      force: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use pip3 to install ansible
+    pip:
+      name: ansible
+      executable: pip3
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use pip3 to install openstack kolla
+    pip:
+      name: git+https://opendev.org/openstack/kolla
+      executable: pip3
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use pip3 to install openstack kolla-ansible
+    pip:
+      name: git+https://opendev.org/openstack/kolla-ansible
+      executable: pip3
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Copy /opt/kolla-ansible/etc/kolla/passwords.yml to /etc/kolla/passwords.yml
+    copy:
+      src: /opt/kolla-ansible/etc/kolla/passwords.yml
+      dest: /etc/kolla/passwords.yml
+      remote_src: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Copy /usr/local/share/kolla/etc_examples/oslo-config-generator/kolla-build.conf to /etc/kolla/kolla-build.conf
+    copy:
+      src: /usr/local/share/kolla/etc_examples/oslo-config-generator/kolla-build.conf
+      dest: /etc/kolla/kolla-build.conf
+      remote_src: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Download and decompress terraform.
+    unarchive:
+      src: "https://releases.hashicorp.com/terraform/0.12.10/terraform_0.12.10_linux_arm.zip"
+      dest: "/tmp/"
+      remote_src: yes
+    when:
+      - inventory_hostname == "openstack1"
+    notify:
+      - "Move terraform"
+      - "Change permissions on terraform"
+
+  - name: Use git to retrieve terraform-openstack-images
+    git:
+      repo: https://github.com/amperecomputing/terraform-openstack-images
+      dest: /opt/terraform-openstack-images
+      clone: yes
+      update: yes
+      force: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use git to retrieve terraform-openstack-magnum-clusters
+    git:
+      repo: https://github.com/ppouliot/terraform-openstack-magnum-clusters
+      dest: /opt/terraform-openstack-magnum-clusters
+      clone: yes
+      update: yes
+      force: yes
+    when:
+      - inventory_hostname == "openstack1"
+
+#  - name: Build kolla containers
+#    command: 'kolla-build -b debian -t source'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+  - name: Generate kolla-ansible passwords
+    command: '/usr/local/bin/kolla-genpw'
+    args:
+      chdir: '/etc/kolla'
+    when:
+      - inventory_hostname == "openstack1"
+
+
+#  - name: Generate kolla-ansible multinode certificates 
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode certificates'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+#  - name: kolla-ansible multinode bootstrap servers 
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+#  - name: kolla-ansible multinode bootstrap prechecks
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+  handlers:
+
+  - name: "Move terraform"
+    shell: "mv /tmp/terraform /usr/local/bin/terraform"
+    args:
+      chdir: "/tmp"
+
+  - name: "Change permissions on terraform"
+    file: 'name={{item}} mode=0755'
+    with_items:
+      - "/usr/local/bin/terraform"
+
