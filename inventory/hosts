@@ -1,0 +1,15 @@
+[ampere]
+openstack1 ansible_host=10.76.96.59
+openstack2 ansible_host=10.76.96.60
+openstack3 ansible_host=10.76.96.61
+openstack4 ansible_host=10.76.96.63
+openstack5 ansible_host=10.76.96.64
+openstack6 ansible_host=10.76.96.65
+openstack7 ansible_host=10.76.96.66
+
+[ampere:vars]
+ansible_ssh_user=root
+ansible_python_interpreter=/usr/bin/python
+ansible_connection=ssh
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+

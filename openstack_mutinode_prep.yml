@@ -103,14 +103,14 @@
 
   - name: Copy ansible multinode inventory for this cluster to /etc/ansible/inventory/multinode on openstack1
     copy:
-      src: multinode
+      src: files/multinode
       dest: /etc/ansible/inventory/multinode
     when:
       - inventory_hostname == "openstack1"
 
   - name: Copy globals.yaml for this multinode to openstack1
     copy:
-      src: globals.yml
+      src: files/globals.yml
       dest: /etc/kolla/globals.yml
     when:
       - inventory_hostname == "openstack1"
