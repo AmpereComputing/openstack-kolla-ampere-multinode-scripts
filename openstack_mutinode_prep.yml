@@ -3,6 +3,17 @@
 - name: Requirements for OpenStack Kolla Deployment
   hosts: ampere
   any_errors_fatal: true
+  handlers:
+  - name: "Move terraform"
+    shell: "mv /tmp/terraform /usr/local/bin/terraform"
+    args:
+      chdir: "/tmp"
+
+  - name: "Change permissions on terraform"
+    file: 'name={{item}} mode=0755'
+    with_items:
+      - "/usr/local/bin/terraform"
+
   tasks:
 
   - name: Ensure /etc/network/interfaces is properly configured
@@ -150,6 +161,7 @@
     pip:
       name: ansible
       executable: pip3
+      extra_args: "-U"
     when:
       - inventory_hostname == "openstack1"
 
@@ -229,7 +241,7 @@
 #      - inventory_hostname == "openstack1"
 
   - name: Generate kolla-ansible passwords
-    command: '/usr/local/bin/kolla-genpw'
+    command: '/usr/local/bin/kolla-genpwd'
     args:
       chdir: '/etc/kolla'
     when:
@@ -250,16 +262,3 @@
 #    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
 #    when:
 #      - inventory_hostname == "openstack1"
-
-  handlers:
-
-  - name: "Move terraform"
-    shell: "mv /tmp/terraform /usr/local/bin/terraform"
-    args:
-      chdir: "/tmp"
-
-  - name: "Change permissions on terraform"
-    file: 'name={{item}} mode=0755'
-    with_items:
-      - "/usr/local/bin/terraform"
-

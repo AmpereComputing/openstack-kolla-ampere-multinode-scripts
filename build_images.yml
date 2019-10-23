@@ -1,0 +1,26 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Requirements for OpenStack Kolla Deployment
+  hosts: ampere
+  any_errors_fatal: true
+  tasks:
+
+  - name: Build kolla containers
+    command: 'kolla-build -b debian -t source'
+    when:
+      - inventory_hostname == "openstack1"
+
+#  - name: Generate kolla-ansible multinode certificates 
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode certificates'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+#  - name: kolla-ansible multinode bootstrap servers 
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
+#    when:
+#      - inventory_hostname == "openstack1"
+
+#  - name: kolla-ansible multinode bootstrap prechecks
+#    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
+#    when:
+#      - inventory_hostname == "openstack1"

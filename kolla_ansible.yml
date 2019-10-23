@@ -1,0 +1,44 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Requirements for OpenStack Kolla Deployment
+  hosts: ampere
+  any_errors_fatal: true
+  tasks:
+
+  - name: Generate kolla-ansible multinode certificates 
+    command: 'kolla-ansible -i /etc/ansible/inventory/multinode certificates'
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: kolla-ansible multinode bootstrap servers 
+    command: 'kolla-ansible -i /etc/ansible/inventory/multinode bootstrap-servers'
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: kolla-ansible multinode prechecks
+    command: 'kolla-ansible -i /etc/ansible/inventory/multinode prechecks'
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: kolla-ansible multinode deploy
+    command: 'kolla-ansible -i /etc/ansible/inventory/multinode deploy'
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: kolla-ansible multinode deploy
+    command: 'kolla-ansible post-deploy'
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Use pip3 to install openstackclient
+    pip:
+      name: openstackclient
+      executable: pip3
+    when:
+      - inventory_hostname == "openstack1"
+
+  - name: Run source adminrc and execute init-runonce 
+    command: 'source /etc/kolla/admin-openrc.sh && sh files/init-runonce'
+    when:
+      - inventory_hostname == "openstack1"
+
