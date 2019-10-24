@@ -52,6 +52,7 @@
       packages:
         - aptitude
         - screen
+        - sudo
         - rsync
         - git
         - curl

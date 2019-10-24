@@ -1,0 +1,9 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Reset Apparmor for Libvirt
+  hosts: ampere
+  any_errors_fatal: true
+  tasks:
+
+  - name: Reset apparmor change back to original setting for libvirt
+    command: 'apparmor_parser --add /etc/apparmor.d/usr.sbin.libvirtd'
