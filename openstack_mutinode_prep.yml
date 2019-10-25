@@ -84,11 +84,7 @@
       extra_args: "-U"
 
   - name: Comment out the line begining with 127.0.1.1 in /etc/hosts
-    replace:
-      path: /etc/hosts
-      before: '127.0.1.1'
-      regexp: '^(.+$)'
-      replace: '# \1'
+    command: "sed -i 's/^127.0.1.1/#127.0.1.1/' /etc/hosts"
 
   - name: Stop and disable of libvirt, iscsi.
     service: 'name={{ item }} enabled=false state=stopped'
