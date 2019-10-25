@@ -19,7 +19,7 @@ IMAGE_TYPE=linux
 # This EXT_NET_CIDR is your public network,that you want to connect to the internet via.
 ENABLE_EXT_NET=${ENABLE_EXT_NET:-1}
 EXT_NET_CIDR='10.76.96.0/24'
-EXT_NET_RANGE='start=10.76.96.100,end=10.76.96.140'
+EXT_NET_RANGE='start=10.76.96.101,end=10.76.96.140'
 EXT_NET_GATEWAY='10.76.96.1'
 
 # Sanitize language settings to avoid commands bailing out

@@ -5,13 +5,12 @@
   any_errors_fatal: true
   tasks:
 
-#  - name: Build kolla containers
-#    command: 'kolla-build -b debian -t source'
-#    when:
-
-#      - inventory_hostname == "openstack1"
-
-  - name: kolla-ansible multinode bootstrap prechecks
-    script: files/images_to_local_registry.sh creates=~/console.txt
+  - name: Build kolla containers
+    command: 'kolla-build -b debian -t source --registry 10.76.96.59:4000 --push'
     when:
       - inventory_hostname == "openstack1"
+
+#  - name: kolla-ansible multinode bootstrap prechecks
+#    script: files/images_to_local_registry.sh creates=~/console.txt
+#    when:
+#      - inventory_hostname == "openstack1"
